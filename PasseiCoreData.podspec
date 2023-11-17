@@ -13,4 +13,5 @@ Pod::Spec.new do |s|
   s.ios.deployment_target = '16.0'
   s.source_files          = 'PasseiCoreData/Classes/**/*' 
   s.dependency 'PasseiFake'
+  s.dependency 'PasseiLogManager'
   end

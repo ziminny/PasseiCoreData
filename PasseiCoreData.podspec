@@ -12,5 +12,5 @@ Pod::Spec.new do |s|
   s.source                = { :git => 'https://github.com/ziminny/PasseiCoreData.git', :tag => s.version.to_s }
   s.ios.deployment_target = '16.0'
   s.source_files          = 'PasseiCoreData/Classes/**/*' 
-  s.dependency 'PasseiCoreData'
+  s.dependency 'PasseiFake'
   end

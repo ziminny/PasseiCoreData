@@ -11,4 +11,5 @@ public enum CDError:Error {
     case fieldUUIDNotPresent
     case fieldDataNotPresent
     case functionNotImplemented
+    case getResults
 }

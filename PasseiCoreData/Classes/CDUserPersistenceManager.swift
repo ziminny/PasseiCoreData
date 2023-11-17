@@ -53,30 +53,38 @@ public class CDUserPersistenceManager {
     public func saveUnique<T: NSManagedObject>(withModel model: NSManagedObject.Model, andCoreDataType coreDataModel: T.Type) async throws {
         try await container.performBackgroundTask { context in
             context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
-            
-            let coreDataObject = T(context: context)
-            
-            try self.checkHasErrorAttributes(coreDataObject: coreDataObject)
-            
+
+    
             let request = coreDataModel.fetchRequest()
-            
-            let results = try context.fetch(request) as? [T]
-            
-            if let results = results, !results.isEmpty {
+            if let results = try context.fetch(request) as? [T], !results.isEmpty {
+              
                 for result in results {
                     context.delete(result)
                 }
             }
+
             
-            let encoder = JSONEncoder()
-            let data = try encoder.encode(model)
+            let coreDataObject = T(context: context)
             
-            coreDataObject.setValue(UUID(), forKey: .uuid)
-            coreDataObject.setValue(data, forKey: .data)
-            
-            try context.save()
+            try self.checkHasErrorAttributes(coreDataObject: coreDataObject)
+
+            do {
+      
+                let encoder = JSONEncoder()
+                let data = try encoder.encode(model)
+
+                coreDataObject.setValue(UUID(), forKey: .uuid)
+                coreDataObject.setValue(data, forKey: .data)
+
+               
+                try context.save()
+            } catch {
+                
+                throw error
+            }
         }
     }
+
     
     
     public func getResults<T:NSManagedObject>(ofType type:T.Type,callback:@escaping ([T]?) -> Void) async throws {
@@ -92,6 +100,26 @@ public class CDUserPersistenceManager {
             let result = try context.fetch(request) as? [T]
             
             callback(result)
+        }
+        
+    }
+    
+    public func getUnique<T:NSManagedObject>(ofType type:T.Type,callback:@escaping (T?) -> Void) async throws {
+        
+        try await container.performBackgroundTask { context in
+            
+            let coreDataObject = T(context: context)
+            
+            try self.checkHasErrorAttributes(coreDataObject: coreDataObject)
+            
+            let request = type.fetchRequest()
+            
+            guard let result = try context.fetch(request) as? [T] else {
+                callback(nil)
+                throw CDError.getResults
+            }
+            
+            callback(result.first)
         }
         
     }

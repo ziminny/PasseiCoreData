@@ -9,15 +9,15 @@ import CoreData
 import PasseiLogManager
 import PasseiFake
 
-public class CDPersistenceController {
+open class CDPersistenceController {
     
-    private let configuration:CDConfigurationProtocol
+    public let configuration:CDConfigurationProtocol
 
-    internal let container: NSPersistentContainer
+    public let container: NSPersistentContainer
     
-    private let fakeRecords = FakeRecords()
+    public let fakeRecords = FakeRecords()
     
-    public class func preview(withConfiguration configuration:CDConfigurationProtocol) -> CDPersistenceController   {
+    open class func preview(withConfiguration configuration:CDConfigurationProtocol) -> CDPersistenceController   {
         let result = CDPersistenceController(withConfiguration: configuration, inMemory: true)
         let viewContext = result.container.viewContext
  

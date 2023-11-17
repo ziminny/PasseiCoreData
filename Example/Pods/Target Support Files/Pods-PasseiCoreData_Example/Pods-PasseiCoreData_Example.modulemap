@@ -1,0 +1,6 @@
+framework module Pods_PasseiCoreData_Example {
+  umbrella header "Pods-PasseiCoreData_Example-umbrella.h"
+
+  export *
+  module * { export * }
+}

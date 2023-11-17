@@ -1,0 +1,16 @@
+PODS:
+  - PasseiCoreData (0.1.0)
+
+DEPENDENCIES:
+  - PasseiCoreData (from `../`)
+
+EXTERNAL SOURCES:
+  PasseiCoreData:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  PasseiCoreData: 8a1fe46d61592d5387773d5390edfc71a6d5fbe3
+
+PODFILE CHECKSUM: f2bd3655249b539a6eb0651463f5190a20c4de32
+
+COCOAPODS: 1.12.1

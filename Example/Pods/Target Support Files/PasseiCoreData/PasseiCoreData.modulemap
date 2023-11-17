@@ -1,0 +1,6 @@
+framework module PasseiCoreData {
+  umbrella header "PasseiCoreData-umbrella.h"
+
+  export *
+  module * { export * }
+}

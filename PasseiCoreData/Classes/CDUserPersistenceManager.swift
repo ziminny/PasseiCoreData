@@ -8,6 +8,7 @@
 import Foundation
 import CoreData
 import UIKit
+import PasseiLogManager
 
 public class CDUserPersistenceManager {
     
@@ -33,7 +34,7 @@ public class CDUserPersistenceManager {
     
     public func save<T: NSManagedObject>(withModel model: NSManagedObject.Model, andCoreDataType coreDataModel: T.Type) async throws {
         
-        try await container.performBackgroundTask { context in
+            let context = container.newBackgroundContext()
             context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
             
             let coreDataObject = T(context: context)
@@ -47,11 +48,11 @@ public class CDUserPersistenceManager {
             coreDataObject.setValue(data, forKey: .data)
             
             try context.save()
-        }
+        
     }
     
-    public func saveUnique<T: NSManagedObject>(withModel model: NSManagedObject.Model, andCoreDataType coreDataModel: T.Type) async throws {
-        try await container.performBackgroundTask { context in
+    public func saveUnique<T: NSManagedObject>(withModel model: NSManagedObject.Model, andCoreDataType coreDataModel: T.Type) throws {
+        let context = container.newBackgroundContext()
             context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
 
     
@@ -82,14 +83,14 @@ public class CDUserPersistenceManager {
                 
                 throw error
             }
-        }
+         
     }
 
     
     
     public func getResults<T:NSManagedObject>(ofType type:T.Type,callback:@escaping ([T]?) -> Void) async throws {
         
-        try await container.performBackgroundTask { context in
+            let context = container.newBackgroundContext()
             
             let coreDataObject = T(context: context)
             
@@ -100,13 +101,13 @@ public class CDUserPersistenceManager {
             let result = try context.fetch(request) as? [T]
             
             callback(result)
-        }
+       
         
     }
     
-    public func getUnique<T:NSManagedObject>(ofType type:T.Type,callback:@escaping (T?) -> Void) async throws {
+    public func getUnique<T:NSManagedObject>(ofType type:T.Type,callback:@escaping (T?) -> Void)  throws {
         
-        try await container.performBackgroundTask { context in
+            let context = container.newBackgroundContext()
             
             let coreDataObject = T(context: context)
             
@@ -120,13 +121,12 @@ public class CDUserPersistenceManager {
             }
             
             callback(result.first)
-        }
-        
+ 
     }
     
-    public func getOne<T:NSManagedObject,S:NSManagedObject.Model>(withModel model:S, savedModelType:S.Type,coreDataType:T.Type,keyOf key:String,callback: @escaping (T?) -> Void) async throws  {
+    public func getOne<T:NSManagedObject,S:NSManagedObject.Model>(withModel model:S,coreDataType:T.Type,keyOf key:String,callback: @escaping (T?) -> Void) throws  {
         
-        try await container.performBackgroundTask { context in
+            let context = container.newBackgroundContext()
             
             let coreDataObject = T(context: context)
             
@@ -161,7 +161,7 @@ public class CDUserPersistenceManager {
                     guard let data = item.value(forKey:.data) as? Data else { continue }
                     
                     let decoder = JSONDecoder()
-                    let currentData = try decoder.decode(savedModelType.self, from: data)
+                    let currentData = try decoder.decode(S.self, from: data)
                     
                     let mirrorCurrentData = Mirror(reflecting: currentData)
                     for case let (label?,value) in mirrorCurrentData.children {
@@ -185,12 +185,12 @@ public class CDUserPersistenceManager {
             }
             
             callback(nil)
-        }
+   
         
     }
     
-    private func deleteOrUpdate<T:NSManagedObject,S:NSManagedObject.Model>(withModel model:S, savedModelType:S.Type,coreDataType:T.Type,keyOf key:String,isUpdate:Bool = false) async throws  {
-        try await container.performBackgroundTask { context in
+    private func deleteOrUpdate<T:NSManagedObject,S:NSManagedObject.Model>(withModel model:S, savedModelType:S.Type,coreDataType:T.Type,keyOf key:String,isUpdate:Bool = false) throws  {
+           let context = container.newBackgroundContext()
             
             let coreDataObject = T(context: context)
             
@@ -250,15 +250,37 @@ public class CDUserPersistenceManager {
                 
                 try context.save()
             }
+       
+    }
+    
+    func deleteAllData() {
+        let entities = container.managedObjectModel.entities
+
+        for entity in entities {
+            guard let entityName = entity.name else {
+                continue
+            }
+
+            let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: entityName)
+            let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+
+            do {
+                try container.viewContext.execute(deleteRequest)
+                try container.viewContext.save()
+            } catch {
+                LogManager.dispachLog("Error delete all tables core data \(Self.self) \(#function) Error: \(error.localizedDescription)")
+                print("Erro ao excluir dados da entidade \(entityName): \(error.localizedDescription)")
+            }
         }
     }
+
     
-    public func update<T:NSManagedObject,S:NSManagedObject.Model>(withModel model:S, savedModelType:S.Type,coreDataType:T.Type,keyOf key:String = "id") async throws  {
-        try await self.deleteOrUpdate(withModel: model, savedModelType: savedModelType, coreDataType: coreDataType,keyOf:key,isUpdate: true)
+    public func update<T:NSManagedObject,S:NSManagedObject.Model>(withModel model:S, savedModelType:S.Type,coreDataType:T.Type,keyOf key:String = "id") throws  {
+        try self.deleteOrUpdate(withModel: model, savedModelType: savedModelType, coreDataType: coreDataType,keyOf:key,isUpdate: true)
     }
     
-    public func delete<T:NSManagedObject,S:NSManagedObject.Model>(withModel model:S, savedModelType:S.Type,coreDataType:T.Type,keyOf key:String = "id") async throws  {
-        try await self.deleteOrUpdate(withModel: model, savedModelType: savedModelType, coreDataType: coreDataType,keyOf:key,isUpdate: false)
+    public func delete<T:NSManagedObject,S:NSManagedObject.Model>(withModel model:S, savedModelType:S.Type,coreDataType:T.Type,keyOf key:String = "id") throws  {
+        try self.deleteOrUpdate(withModel: model, savedModelType: savedModelType, coreDataType: coreDataType,keyOf:key,isUpdate: false)
     }
     
 }

@@ -115,12 +115,13 @@ public class CDUserPersistenceManager {
             
             let request = type.fetchRequest()
             
-            guard let result = try context.fetch(request) as? [T] else {
+            guard let results = try context.fetch(request) as? [T] else {
                 callback(nil)
                 throw CDError.getResults
             }
-            
-            callback(result.first)
+
+            let result = results.filter { $0.value(forKey: .uuid) != nil }.first
+            callback(result)
  
     }
     

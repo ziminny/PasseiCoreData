@@ -190,7 +190,7 @@ public class CDUserPersistenceManager {
         
     }
     
-    private func deleteOrUpdate<T:NSManagedObject,S:NSManagedObject.Model>(withModel model:S, savedModelType:S.Type,coreDataType:T.Type,keyOf key:String,isUpdate:Bool = false) throws  {
+    private func deleteOrUpdate<T:NSManagedObject,S:NSManagedObject.Model>(withModel model:S,coreDataType:T.Type,keyOf key:String,isUpdate:Bool = false) throws  {
            let context = container.newBackgroundContext()
             
             let coreDataObject = T(context: context)
@@ -225,7 +225,7 @@ public class CDUserPersistenceManager {
                     guard let data = item.value(forKey:.data) as? Data else { continue }
                     
                     let decoder = JSONDecoder()
-                    let currentData = try decoder.decode(savedModelType.self, from: data)
+                    let currentData = try decoder.decode(S.self, from: data)
                     
                     let mirrorCurrentData = Mirror(reflecting: currentData)
                     for case let (label?,value) in mirrorCurrentData.children {
@@ -254,7 +254,7 @@ public class CDUserPersistenceManager {
        
     }
     
-    func deleteAllData() {
+    public func deleteAllData() {
         let entities = container.managedObjectModel.entities
 
         for entity in entities {
@@ -276,12 +276,12 @@ public class CDUserPersistenceManager {
     }
 
     
-    public func update<T:NSManagedObject,S:NSManagedObject.Model>(withModel model:S, savedModelType:S.Type,coreDataType:T.Type,keyOf key:String = "id") throws  {
-        try self.deleteOrUpdate(withModel: model, savedModelType: savedModelType, coreDataType: coreDataType,keyOf:key,isUpdate: true)
+    public func update<T:NSManagedObject,S:NSManagedObject.Model>(withModel model:S,coreDataType:T.Type,keyOf key:String = "id") throws  {
+        try self.deleteOrUpdate(withModel: model, coreDataType: coreDataType,keyOf:key,isUpdate: true)
     }
     
-    public func delete<T:NSManagedObject,S:NSManagedObject.Model>(withModel model:S, savedModelType:S.Type,coreDataType:T.Type,keyOf key:String = "id") throws  {
-        try self.deleteOrUpdate(withModel: model, savedModelType: savedModelType, coreDataType: coreDataType,keyOf:key,isUpdate: false)
+    public func delete<T:NSManagedObject,S:NSManagedObject.Model>(withModel model:S,coreDataType:T.Type,keyOf key:String = "id") throws  {
+        try self.deleteOrUpdate(withModel: model, coreDataType: coreDataType,keyOf:key,isUpdate: false)
     }
     
 }

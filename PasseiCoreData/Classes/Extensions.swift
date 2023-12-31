@@ -15,9 +15,10 @@ public protocol CoreDataModelProtocol {
 
 public extension NSManagedObject {
     
-    enum Keys:String {
+    enum Keys: String {
         case uuid = "uuid"
         case data = "data"
+        case timestamps = "timestamps"
     }
     
     func setValue(_ value: Any?, forKey key: Keys) {
@@ -30,14 +31,14 @@ public extension NSManagedObject {
     
 }
 
-extension NSManagedObject:CoreDataModelProtocol  {
+extension NSManagedObject: CoreDataModelProtocol  {
     
     public typealias Model = Codable
     public func getModel() throws -> Model? {
         throw CDError.functionNotImplemented
     }
     
-    public func makeModel<T:Model>(withData data:Data?,ofType type:T.Type) throws -> Model? {
+    public func makeModel<T:Model>(withData data: Data?, ofType type: T.Type) throws -> Model? {
         guard let data = data else {
             return nil
         }

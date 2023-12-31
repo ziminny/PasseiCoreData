@@ -30,12 +30,15 @@ public class CDUserPersistenceManager {
         if coreDataAttributes[NSManagedObject.Keys.data.rawValue] == nil {
             throw CDError.fieldDataNotPresent
         }
+        
+        if coreDataAttributes[NSManagedObject.Keys.timestamps.rawValue] == nil {
+            throw CDError.fieldTimestampsNotPresent
+        }
     }
     
     public func save<T: NSManagedObject>(withModel model: NSManagedObject.Model, andCoreDataType coreDataModel: T.Type) async throws {
         
-            let context = container.newBackgroundContext()
-            context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+            let context = container.newBackgroundContext() 
             
             let coreDataObject = T(context: context)
             
@@ -43,9 +46,12 @@ public class CDUserPersistenceManager {
             
             let encoder = JSONEncoder()
             let data = try encoder.encode(model)
+        
+            let createDate:TimeInterval = Date().timeIntervalSince1970
             
             coreDataObject.setValue(UUID(), forKey: .uuid)
             coreDataObject.setValue(data, forKey: .data)
+            coreDataObject.setValue(createDate, forKey: .timestamps)
             
             try context.save()
         
@@ -209,36 +215,14 @@ public class CDUserPersistenceManager {
             guard coreDataAttributes[NSManagedObject.Keys.data.rawValue] != nil else {
                 throw CDError.fieldDataNotPresent
             }
-            
-            var modelIdentifier:String? = nil
-            
-            let mirror = Mirror(reflecting: model)
-            for case let (label?,value) in mirror.children {
-                if label == key {
-                    modelIdentifier = "\(value)"
-                    break;
-                }
+        
+            guard coreDataAttributes[NSManagedObject.Keys.timestamps.rawValue] != nil else {
+                throw CDError.fieldTimestampsNotPresent
             }
-            
+             
             if let result {
                 for item in result {
-                    guard let data = item.value(forKey:.data) as? Data else { continue }
-                    
-                    let decoder = JSONDecoder()
-                    let currentData = try decoder.decode(S.self, from: data)
-                    
-                    let mirrorCurrentData = Mirror(reflecting: currentData)
-                    for case let (label?,value) in mirrorCurrentData.children {
-                        if let modelIdentifier {
-                            if label == key {
-                                if modelIdentifier == "\(value)" {
-                                    context.delete(item)
-                                    break
-                                }
-                            }
-                            
-                        }
-                    }
+                    context.delete(item)
                 }
                 
                 if isUpdate {

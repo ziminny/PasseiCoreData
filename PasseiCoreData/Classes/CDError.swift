@@ -7,9 +7,12 @@
 
 import Foundation
 
-public enum CDError:Error {
+public enum CDError: Error {
+    
     case fieldUUIDNotPresent
     case fieldDataNotPresent
+    case fieldTimestampsNotPresent
     case functionNotImplemented
     case getResults
+    
 }

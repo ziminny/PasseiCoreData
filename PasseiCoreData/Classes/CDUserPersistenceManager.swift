@@ -79,9 +79,11 @@ public class CDUserPersistenceManager {
       
                 let encoder = JSONEncoder()
                 let data = try encoder.encode(model)
+                let createDate:TimeInterval = Date().timeIntervalSince1970
 
                 coreDataObject.setValue(UUID(), forKey: .uuid)
                 coreDataObject.setValue(data, forKey: .data)
+                coreDataObject.setValue(createDate, forKey: .timestamps)
 
                
                 try context.save()

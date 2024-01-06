@@ -94,23 +94,20 @@ public class CDUserPersistenceManager {
          
     }
 
-    
-    
-    public func getResults<T:NSManagedObject>(ofType type:T.Type,callback:@escaping ([T]?) -> Void) async throws {
+    public func getResults<T:NSManagedObject>(ofType type:T.Type,callback:@escaping ([T]?) -> Void) throws {
         
-            let context = container.newBackgroundContext()
-            
-            let coreDataObject = T(context: context)
-            
-            try self.checkHasErrorAttributes(coreDataObject: coreDataObject)
-            
-            let request = type.fetchRequest()
-            
-            let result = try context.fetch(request) as? [T]
-            
-            callback(result)
-       
+        let context = container.newBackgroundContext()
         
+        let coreDataObject = T(context: context)
+        
+        try self.checkHasErrorAttributes(coreDataObject: coreDataObject)
+        
+        let request = type.fetchRequest()
+        
+        let result = try context.fetch(request) as? [T]
+        
+        callback(result)
+ 
     }
     
     public func getUnique<T:NSManagedObject>(ofType type:T.Type,callback:@escaping (T?) -> Void)  throws {

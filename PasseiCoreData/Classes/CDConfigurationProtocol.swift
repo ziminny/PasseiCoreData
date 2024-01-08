@@ -10,6 +10,6 @@ import CoreData
 import PasseiFake
 
 public protocol CDConfigurationProtocol {
-    var  dbName:String { get }
-    func generateFakeModelInMemory(fake:FakeRecords,context:NSManagedObjectContext) throws
+    var  dbName: String { get }
+    func generateFakeModelInMemory(fake: FakeRecords,context: NSManagedObjectContext) throws
 }

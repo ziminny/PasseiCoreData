@@ -38,22 +38,22 @@ public class CDUserPersistenceManager {
     
     public func save<T: NSManagedObject>(withModel model: NSManagedObject.Model, andCoreDataType coreDataModel: T.Type) throws {
         
-            let context = container.newBackgroundContext() 
-            
-            let coreDataObject = T(context: context)
-            
-            try self.checkHasErrorAttributes(coreDataObject: coreDataObject)
-            
-            let encoder = JSONEncoder()
-            let data = try encoder.encode(model)
+        let context = container.newBackgroundContext()
         
-            let createDate:TimeInterval = Date().timeIntervalSince1970
-            
-            coreDataObject.setValue(UUID(), forKey: .uuid)
-            coreDataObject.setValue(data, forKey: .data)
-            coreDataObject.setValue(createDate, forKey: .timestamps)
-            
-            try context.save()
+        let coreDataObject = T(context: context)
+        
+        try self.checkHasErrorAttributes(coreDataObject: coreDataObject)
+        
+        let encoder = JSONEncoder()
+        let data = try encoder.encode(model)
+        
+        let createDate:TimeInterval = Date().timeIntervalSince1970
+        
+        coreDataObject.setValue(UUID(), forKey: .uuid)
+        coreDataObject.setValue(data, forKey: .data)
+        coreDataObject.setValue(createDate, forKey: .timestamps)
+        
+        try context.save()
         
     }
     
@@ -68,7 +68,7 @@ public class CDUserPersistenceManager {
             
             let encoder = JSONEncoder()
             let data = try encoder.encode(model)
-        
+            
             let createDate:TimeInterval = Date().timeIntervalSince1970
             
             coreDataObject.setValue(UUID(), forKey: .uuid)
@@ -82,41 +82,41 @@ public class CDUserPersistenceManager {
     
     public func saveUnique<T: NSManagedObject>(withModel model: NSManagedObject.Model, andCoreDataType coreDataModel: T.Type) throws {
         let context = container.newBackgroundContext()
-            context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
-
-    
-            let request = coreDataModel.fetchRequest()
-            if let results = try context.fetch(request) as? [T], !results.isEmpty {
-              
-                for result in results {
-                    context.delete(result)
-                }
-            }
-
+        context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        
+        
+        let request = coreDataModel.fetchRequest()
+        if let results = try context.fetch(request) as? [T], !results.isEmpty {
             
-            let coreDataObject = T(context: context)
-            
-            try self.checkHasErrorAttributes(coreDataObject: coreDataObject)
-
-            do {
-      
-                let encoder = JSONEncoder()
-                let data = try encoder.encode(model)
-                let createDate:TimeInterval = Date().timeIntervalSince1970
-
-                coreDataObject.setValue(UUID(), forKey: .uuid)
-                coreDataObject.setValue(data, forKey: .data)
-                coreDataObject.setValue(createDate, forKey: .timestamps)
-
-               
-                try context.save()
-            } catch {
-                
-                throw error
+            for result in results {
+                context.delete(result)
             }
-         
+        }
+        
+        
+        let coreDataObject = T(context: context)
+        
+        try self.checkHasErrorAttributes(coreDataObject: coreDataObject)
+        
+        do {
+            
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(model)
+            let createDate:TimeInterval = Date().timeIntervalSince1970
+            
+            coreDataObject.setValue(UUID(), forKey: .uuid)
+            coreDataObject.setValue(data, forKey: .data)
+            coreDataObject.setValue(createDate, forKey: .timestamps)
+            
+            
+            try context.save()
+        } catch {
+            
+            throw error
+        }
+        
     }
-
+    
     public func getResults<T:NSManagedObject>(ofType type:T.Type) throws -> [T]? {
         
         let context = container.newBackgroundContext()
@@ -128,145 +128,145 @@ public class CDUserPersistenceManager {
         let request = type.fetchRequest()
         
         return try context.fetch(request) as? [T]
- 
+        
     }
     
     public func getUnique<T:NSManagedObject>(ofType type:T.Type)  throws -> T? {
         
-            let context = container.newBackgroundContext()
-            
-            let coreDataObject = T(context: context)
-            
-            try self.checkHasErrorAttributes(coreDataObject: coreDataObject)
-            
-            let request = type.fetchRequest()
-            
-            guard let results = try context.fetch(request) as? [T] else {
-                throw CDError.getResults
-            }
-
-            return  results.filter { $0.value(forKey: .uuid) != nil }.first
-             
- 
+        let context = container.newBackgroundContext()
+        
+        let coreDataObject = T(context: context)
+        
+        try self.checkHasErrorAttributes(coreDataObject: coreDataObject)
+        
+        let request = type.fetchRequest()
+        
+        guard let results = try context.fetch(request) as? [T] else {
+            throw CDError.getResults
+        }
+        
+        return  results.filter { $0.value(forKey: .uuid) != nil }.first
+        
+        
     }
     
-    public func getOne<T:NSManagedObject,S:NSManagedObject.Model>(withModel model:S,coreDataType:T.Type,keyOf key:String,callback: @escaping (T?) -> Void) throws  {
+    public func getOne<T: NSManagedObject, S: NSManagedObject.Model>(withModel model: S,coreDataType: T.Type, keyOf key: String, callback: @escaping (T?) -> Void) throws  {
         
-            let context = container.newBackgroundContext()
-            
-            let coreDataObject = T(context: context)
-            
-            let request = coreDataType.fetchRequest()
-            
-            let result = try context.fetch(request) as? [T]
-            
-            let coreDataEntityDescription = coreDataObject.entity
-            let coreDataAttributes = coreDataEntityDescription.attributesByName
-            
-            guard coreDataAttributes[NSManagedObject.Keys.uuid.rawValue] != nil else {
-                throw CDError.fieldUUIDNotPresent
+        let context = container.newBackgroundContext()
+        
+        let coreDataObject = T(context: context)
+        
+        let request = coreDataType.fetchRequest()
+        
+        let result = try context.fetch(request) as? [T]
+        
+        let coreDataEntityDescription = coreDataObject.entity
+        let coreDataAttributes = coreDataEntityDescription.attributesByName
+        
+        guard coreDataAttributes[NSManagedObject.Keys.uuid.rawValue] != nil else {
+            throw CDError.fieldUUIDNotPresent
+        }
+        
+        guard coreDataAttributes[NSManagedObject.Keys.data.rawValue] != nil else {
+            throw CDError.fieldDataNotPresent
+        }
+        
+        var modelIdentifier:String? = nil
+        
+        let mirror = Mirror(reflecting: model)
+        for case let (label?,value) in mirror.children {
+            if label == key {
+                modelIdentifier = "\(value)"
+                break;
             }
-            
-            guard coreDataAttributes[NSManagedObject.Keys.data.rawValue] != nil else {
-                throw CDError.fieldDataNotPresent
-            }
-            
-            var modelIdentifier:String? = nil
-            
-            let mirror = Mirror(reflecting: model)
-            for case let (label?,value) in mirror.children {
-                if label == key {
-                    modelIdentifier = "\(value)"
-                    break;
-                }
-            }
-            
-            if let result {
-                var breakFor = false
-                for item in result {
-                    guard let data = item.value(forKey:.data) as? Data else { continue }
-                    
-                    let decoder = JSONDecoder()
-                    let currentData = try decoder.decode(S.self, from: data)
-                    
-                    let mirrorCurrentData = Mirror(reflecting: currentData)
-                    for case let (label?,value) in mirrorCurrentData.children {
-                        if let modelIdentifier {
-                            if label == key {
-                                if modelIdentifier == "\(value)" {
-                                    callback(item)
-                                    breakFor = true
-                                    return
-                                }
+        }
+        
+        if let result {
+            var breakFor = false
+            for item in result {
+                guard let data = item.value(forKey:.data) as? Data else { continue }
+                
+                let decoder = JSONDecoder()
+                let currentData = try decoder.decode(S.self, from: data)
+                
+                let mirrorCurrentData = Mirror(reflecting: currentData)
+                for case let (label?,value) in mirrorCurrentData.children {
+                    if let modelIdentifier {
+                        if label == key {
+                            if modelIdentifier == "\(value)" {
+                                callback(item)
+                                breakFor = true
+                                return
                             }
-                            
                         }
-                    }
-                    
-                    if breakFor || result.isEmpty {
-                        callback(nil)
-                        return
+                        
                     }
                 }
+                
+                if breakFor || result.isEmpty {
+                    callback(nil)
+                    return
+                }
             }
-            
-            callback(nil)
-    
+        }
+        
+        callback(nil)
+        
     }
     
-    private func deleteOrUpdate<T:NSManagedObject,S:NSManagedObject.Model>(withModel model:S,coreDataType:T.Type,keyOf key:String,isUpdate:Bool = false) throws  {
-           let context = container.newBackgroundContext()
-            
-            let coreDataObject = T(context: context)
-            
-            let request = coreDataType.fetchRequest()
-            
-            let result = try context.fetch(request) as? [T]
-            
-            let coreDataEntityDescription = coreDataObject.entity
-            let coreDataAttributes = coreDataEntityDescription.attributesByName
-            
-            guard coreDataAttributes[NSManagedObject.Keys.uuid.rawValue] != nil else {
-                throw CDError.fieldUUIDNotPresent
-            }
-            
-            guard coreDataAttributes[NSManagedObject.Keys.data.rawValue] != nil else {
-                throw CDError.fieldDataNotPresent
-            }
+    private func deleteOrUpdate<T: NSManagedObject, S: NSManagedObject.Model>(withModel model: S, coreDataType: T.Type,keyOf key: String, isUpdate: Bool = false) throws  {
+        let context = container.newBackgroundContext()
         
-            guard coreDataAttributes[NSManagedObject.Keys.timestamps.rawValue] != nil else {
-                throw CDError.fieldTimestampsNotPresent
+        let coreDataObject = T(context: context)
+        
+        let request = coreDataType.fetchRequest()
+        
+        let result = try context.fetch(request) as? [T]
+        
+        let coreDataEntityDescription = coreDataObject.entity
+        let coreDataAttributes = coreDataEntityDescription.attributesByName
+        
+        guard coreDataAttributes[NSManagedObject.Keys.uuid.rawValue] != nil else {
+            throw CDError.fieldUUIDNotPresent
+        }
+        
+        guard coreDataAttributes[NSManagedObject.Keys.data.rawValue] != nil else {
+            throw CDError.fieldDataNotPresent
+        }
+        
+        guard coreDataAttributes[NSManagedObject.Keys.timestamps.rawValue] != nil else {
+            throw CDError.fieldTimestampsNotPresent
+        }
+        
+        if let result {
+            for item in result {
+                context.delete(item)
             }
-             
-            if let result {
-                for item in result {
-                    context.delete(item)
-                }
+            
+            if isUpdate {
+                let encoder = JSONEncoder()
+                let modelData = try encoder.encode(model)
                 
-                if isUpdate {
-                    let encoder = JSONEncoder()
-                    let modelData = try encoder.encode(model)
-                    
-                    coreDataObject.setValue(UUID(), forKey: .uuid)
-                    coreDataObject.setValue(modelData, forKey: .data)
-                }
-                
-                try context.save()
+                coreDataObject.setValue(UUID(), forKey: .uuid)
+                coreDataObject.setValue(modelData, forKey: .data)
             }
-       
+            
+            try context.save()
+        }
+        
     }
     
     public func deleteAllData() {
         let entities = container.managedObjectModel.entities
-
+        
         for entity in entities {
             guard let entityName = entity.name else {
                 continue
             }
-
+            
             let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: entityName)
             let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
-
+            
             do {
                 try container.viewContext.execute(deleteRequest)
                 try container.viewContext.save()
@@ -276,7 +276,7 @@ public class CDUserPersistenceManager {
             }
         }
     }
-
+    
     
     public func update<T: NSManagedObject,S: NSManagedObject.Model>(withModel model: S,coreDataType: T.Type,keyOf key: String = "id") throws  {
         try self.deleteOrUpdate(withModel: model, coreDataType: coreDataType,keyOf: key,isUpdate: true)
@@ -288,17 +288,54 @@ public class CDUserPersistenceManager {
     
     public func deleteMany<T:NSManagedObject,S: NSManagedObject.Model>(withModel models: [S],coreDataType: T.Type,keyOf key: String = "id") throws  {
         for model in models {
-            try self.deleteOrUpdate(withModel: model, coreDataType: coreDataType,keyOf: key,isUpdate: false)
+            try self.deleteSelecteds(withModel: model, coreDataType: coreDataType,keyOf: key)
         }
     }
     
+    private func deleteSelecteds<T: NSManagedObject, S: NSManagedObject.Model>(withModel model: S, coreDataType: T.Type, keyOf key: String = "id") throws  {
+        
+        let context = container.newBackgroundContext()
+        
+        let request = coreDataType.fetchRequest()
+        
+        let result = try context.fetch(request) as? [T]
+        
+        var id: Int = 0
+        
+        let mirror = Mirror(reflecting: model)
+        
+        for case let (label?,value) in mirror.children {
+            if label == key {
+                if let value = value as? Int {
+                    id = value
+                    break
+                }
+            }
+        }
+        
+        if let result {
+            for item in result {
+                if let data = item.value(forKey: .data) as? Data {
+                    
+                    let dataModel = try JSONDecoder().decode(S.self, from: data)
+                    
+                    let mirror = Mirror(reflecting: dataModel)
+                    for case let (label?,value) in mirror.children {
+                        if label == key {
+                            if let value = value as? Int {
+                                if id == value {
+                                    context.delete(item)
+                                }
+                            }
+                        }
+                    }
+                    
+                }
+            }
+            
+            try context.save()
+        }
+        
+    }
+    
 }
-
-
-
-
-
-
-
-
-

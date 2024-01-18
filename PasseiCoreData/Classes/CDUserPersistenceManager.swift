@@ -6,8 +6,7 @@
 //
 
 import Foundation
-import CoreData
-import UIKit
+import CoreData 
 import PasseiLogManager
 
 public class CDUserPersistenceManager {

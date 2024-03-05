@@ -11,6 +11,8 @@ import CoreData
 /// Protocolo para implementação de operações básicas de um Core Data (CD) para um modelo específico.
 public protocol CDManagedObjectProtocol {
     
+    associatedtype KeyID
+    
     /// Tipo associado que representa o modelo NSManagedObject associado a este protocolo.
     associatedtype Model: NSManagedObject.Model
     
@@ -47,7 +49,7 @@ public protocol CDManagedObjectProtocol {
     ///   - keyID: Identificador único associado ao objeto Model (opcional).
     /// - Returns: Valor booleano indicando se o objeto está expirado ou não.
     /// - Throws: Erros relacionados à verificação de expiração.
-    func expired(expirationTime: Double, keyID: Int?) throws -> Bool
+    func expired(expirationTime: Double, keyID: KeyID?) throws -> Bool
     
     /// Inicializador padrão para conformidade ao protocolo.
     init()

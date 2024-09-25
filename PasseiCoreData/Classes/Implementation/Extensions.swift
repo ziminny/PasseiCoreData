@@ -61,7 +61,7 @@ extension NSManagedObject: CoreDataModelProtocol  {
     ///
     /// - Throws: `CDError.functionNotImplemented` se o método não estiver implementado.
     public func getModel() throws -> Model? {
-        throw CDError.functionNotImplemented
+        throw CDError.functionNotImplemented(String(describing: Model.self))
     }
     
     /// Cria um modelo a partir dos dados fornecidos.
@@ -84,3 +84,5 @@ extension NSManagedObject: CoreDataModelProtocol  {
         return model
     }
 }
+
+

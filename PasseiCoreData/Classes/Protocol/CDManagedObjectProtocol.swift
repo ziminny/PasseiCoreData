@@ -9,15 +9,15 @@ import Foundation
 import CoreData
 
 /// Protocolo para implementação de operações básicas de um Core Data (CD) para um modelo específico.
-public protocol CDManagedObjectProtocol {
+public protocol CDManagedObjectProtocol where Self: Sendable {
     
-    associatedtype KeyID
+    associatedtype KeyID where KeyID: Equatable
     
     /// Tipo associado que representa o modelo NSManagedObject associado a este protocolo.
     associatedtype Model: NSManagedObject.Model
     
     /// Gerenciador de persistência do Core Data.
-    var manager: CDPersistenceManager { get }
+    var manager: CDPersistenceManager<KeyID> { get }
     
     /// Obtém um objeto do tipo Model do Core Data.
     /// - Returns: Objeto do tipo Model recuperado do Core Data, ou nil se não encontrado.

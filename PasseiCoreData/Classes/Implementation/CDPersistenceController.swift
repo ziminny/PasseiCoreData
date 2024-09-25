@@ -7,10 +7,10 @@
 
 import CoreData
 import PasseiLogManager
-import PasseiFake
+@preconcurrency import PasseiFake
 
 /// Controlador de persistência para interação com o Core Data.
-open class CDPersistenceController {
+open class CDPersistenceController: @unchecked Sendable {
     
     /// A configuração do Core Data associada ao controlador.
     public let configuration: CDConfigurationProtocol
@@ -25,7 +25,7 @@ open class CDPersistenceController {
     ///
     /// - Parameter configuration: A configuração do Core Data a ser utilizada.
     /// - Returns: Uma instância do controlador configurada para visualização de prévia.
-    open class func preview(withConfiguration configuration: CDConfigurationProtocol) -> CDPersistenceController   {
+    public static func preview(withConfiguration configuration: CDConfigurationProtocol) -> CDPersistenceController   {
         let result = CDPersistenceController(withConfiguration: configuration, inMemory: true)
         let viewContext = result.container.viewContext
         
@@ -35,7 +35,7 @@ open class CDPersistenceController {
         } catch {
             let error = error as NSError
             print("Core data preview error: \(error)")
-            LogManager.dispachLog("Error try configuring Core Data preview: \(error.localizedDescription)")
+            PLMLogger.logIt("Error try configuring Core Data preview: \(error.localizedDescription)")
         }
         
         return result
@@ -57,7 +57,7 @@ open class CDPersistenceController {
             
             if let error = error as NSError? {
                 print("Core data error: \(error)")
-                LogManager.dispachLog("Error trying to configure Core Data: \(error.localizedDescription)")
+                PLMLogger.logIt("Error trying to configure Core Data: \(error.localizedDescription)")
             }
             print("Core data loaded")
         })

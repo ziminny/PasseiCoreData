@@ -13,7 +13,7 @@ public protocol CDManagedGroupObjectProtocol: CDManagedObjectProtocol {
     /// Obtém todos os objetos do tipo Model do Core Data em um callback.
     /// - Parameter callback: Closure que recebe um array de objetos Model como parâmetro.
     /// - Throws: Erros relacionados à recuperação dos objetos.
-    func getObjects(callback: @escaping ([Model]) -> Void) throws
+    func getObjects() throws -> [Model]
     
     /// Salva um array de objetos do tipo Model no Core Data.
     /// - Parameter models: Array de objetos Model a serem salvos.

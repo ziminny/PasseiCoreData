@@ -7,9 +7,10 @@
 
 import CoreData
 import PasseiLogManager
+@preconcurrency import CoreData.NSMergePolicy
 
 /// Gerenciador de persistência para a entidade `CDUser`.
-public class CDPersistenceManager {
+public struct CDPersistenceManager<Key>: Sendable where Key: Equatable {
     
     /// Controlador de persistência utilizado para interação com o Core Data.
     private let controller: CDPersistenceController
@@ -21,9 +22,7 @@ public class CDPersistenceManager {
     ///
     /// - Parameter controller: O controlador de persistência do Core Data a ser utilizado.
     public init(controller: CDPersistenceController) {
-        
         self.controller = controller
-        
     }
         
     /// Salva um objeto do tipo `NSManagedObject` no Core Data com base no modelo fornecido.
@@ -92,7 +91,7 @@ public class CDPersistenceManager {
     public func saveUnique<T: NSManagedObject>(withModel model: NSManagedObject.Model, andCoreDataType coreDataModel: T.Type) throws {
         
         let context = container.newBackgroundContext()
-        context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        context.mergePolicy = NSMergePolicyType.mergeByPropertyObjectTrumpMergePolicyType
         
         
         let request = coreDataModel.fetchRequest()
@@ -119,7 +118,6 @@ public class CDPersistenceManager {
             
             try context.save()
         } catch {
-            
             throw error
         }
         
@@ -191,7 +189,7 @@ public class CDPersistenceManager {
     /// - Note: Este método utiliza um modelo `S` para realizar a busca no Core Data com base no campo identificado pela chave especificada.
     ///
     /// - Warning: Certifique-se de que o tipo `T` é uma subclasse de `NSManagedObject`, o tipo `S` implementa o protocolo `Codable`, e que o campo identificado pela chave no modelo tem uma correspondência no Core Data para que a busca seja realizada corretamente.
-    public func getOne<T: NSManagedObject, S: NSManagedObject.Model>(withModel model: S, coreDataType: T.Type, keyOf key: String, callback: @escaping (T?) -> Void) throws {
+    public func getOne<T: NSManagedObject, S: NSManagedObject.Model>(withModel model: S, coreDataType: T.Type, keyOf key: String) async throws -> T? {
         
         let context = container.newBackgroundContext()
         
@@ -235,22 +233,20 @@ public class CDPersistenceManager {
                     if let modelIdentifier {
                         if label == key {
                             if modelIdentifier == "\(value)" {
-                                callback(item)
                                 breakFor = true
-                                return
+                                return item
                             }
                         }
                     }
                 }
                 
                 if breakFor || result.isEmpty {
-                    callback(nil)
-                    return
+                    return nil
                 }
             }
         }
         
-        callback(nil)
+        return nil
         
     }
     
@@ -273,7 +269,7 @@ public class CDPersistenceManager {
                 try container.viewContext.execute(deleteRequest)
                 try container.viewContext.save()
             } catch {
-                LogManager.dispachLog("Error delete all tables core data \(Self.self) \(#function) Error: \(error.localizedDescription)")
+                PLMLogger.logIt("Error delete all tables core data \(Self.self) \(#function) Error: \(error.localizedDescription)")
                 print("Erro ao excluir dados da entidade \(entityName): \(error.localizedDescription)")
             }
         }
@@ -357,13 +353,13 @@ public class CDPersistenceManager {
         
         let result = try context.fetch(request) as? [T]
         
-        var id: Int = 0
+        var id: Key?
         
         let mirror = Mirror(reflecting: model)
         
         for case let (label?, value) in mirror.children {
             if label == key {
-                if let value = value as? Int {
+                if let value = value as? Key {
                     id = value
                     break
                 }
@@ -379,8 +375,8 @@ public class CDPersistenceManager {
                     let mirror = Mirror(reflecting: dataModel)
                     for case let (label?, value) in mirror.children {
                         if label == key {
-                            if let value = value as? Int {
-                                if id == value {
+                            if let value = value as? Key {
+                                if let id, id == value {
                                     context.delete(item)
                                 }
                             }

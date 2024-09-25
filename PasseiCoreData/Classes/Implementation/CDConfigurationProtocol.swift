@@ -10,7 +10,7 @@ import CoreData
 import PasseiFake
 
 /// Protocolo para configurar o Core Data.
-public protocol CDConfigurationProtocol {
+public protocol CDConfigurationProtocol where Self: Sendable {
 
     /// O nome do banco de dados a ser utilizado.
     var dbName: String { get }

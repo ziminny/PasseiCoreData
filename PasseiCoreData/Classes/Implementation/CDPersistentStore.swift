@@ -1,5 +1,5 @@
 //
-//  CDPersistenceManager.swift
+//  CDPersistentStore.swift
 //  PasseiOAB
 //
 //  Created by Vagner Oliveira on 14/11/23.
@@ -10,7 +10,7 @@ import PasseiLogManager
 @preconcurrency import CoreData.NSMergePolicy
 
 /// Gerenciador de persistência para a entidade `CDUser`.
-public struct CDPersistenceManager<Key>: Sendable where Key: Equatable {
+public struct CDPersistentStore<Key>: Sendable where Key: Equatable {
     
     /// Controlador de persistência utilizado para interação com o Core Data.
     private let controller: CDPersistenceController
@@ -134,7 +134,7 @@ public struct CDPersistenceManager<Key>: Sendable where Key: Equatable {
     /// - Note: Este método retorna um array opcional de objetos do tipo `T` recuperados do Core Data. Se ocorrerem erros durante a recuperação, uma exceção será lançada.
     ///
     /// - Warning: Certifique-se de que o tipo `T` é uma subclasse de `NSManagedObject` e implementa o protocolo `Codable` para que a codificação e decodificação dos dados seja realizada corretamente.
-    public func getResults<T: NSManagedObject>(ofType type: T.Type) throws -> [T]? {
+    public func getResults<T: NSManagedObject>(ofType type: T.Type, predicate: NSPredicate? = nil) throws -> [T]? {
         
         let context = container.newBackgroundContext()
         let coreDataObject = T(context: context)
@@ -142,6 +142,9 @@ public struct CDPersistenceManager<Key>: Sendable where Key: Equatable {
         try self.checkHasErrorAttributes(coreDataObject: coreDataObject)
         
         let request = type.fetchRequest()
+        request.predicate = predicate
+        
+        request.predicate = NSPredicate(format: "uuid != nil")
         
         return try context.fetch(request) as? [T]
         
@@ -159,7 +162,7 @@ public struct CDPersistenceManager<Key>: Sendable where Key: Equatable {
     /// - Note: Este método retorna um objeto opcional do tipo `T` recuperado do Core Data. Se ocorrerem erros durante a recuperação, uma exceção será lançada.
     ///
     /// - Warning: Certifique-se de que o tipo `T` é uma subclasse de `NSManagedObject` e implementa o protocolo `Codable` para que a codificação e decodificação dos dados seja realizada corretamente.
-    public func getUnique<T: NSManagedObject>(ofType type: T.Type) throws -> T? {
+    public func getUnique<T: NSManagedObject>(ofType type: T.Type, predicate: NSPredicate? = nil) throws -> T? {
         
         let context = container.newBackgroundContext()
         let coreDataObject = T(context: context)
@@ -167,6 +170,7 @@ public struct CDPersistenceManager<Key>: Sendable where Key: Equatable {
         try self.checkHasErrorAttributes(coreDataObject: coreDataObject)
         
         let request = type.fetchRequest()
+        request.predicate = predicate
         
         guard let results = try context.fetch(request) as? [T] else {
             throw CDError.getResults
@@ -189,7 +193,7 @@ public struct CDPersistenceManager<Key>: Sendable where Key: Equatable {
     /// - Note: Este método utiliza um modelo `S` para realizar a busca no Core Data com base no campo identificado pela chave especificada.
     ///
     /// - Warning: Certifique-se de que o tipo `T` é uma subclasse de `NSManagedObject`, o tipo `S` implementa o protocolo `Codable`, e que o campo identificado pela chave no modelo tem uma correspondência no Core Data para que a busca seja realizada corretamente.
-    public func getOne<T: NSManagedObject, S: NSManagedObject.Model>(withModel model: S, coreDataType: T.Type, keyOf key: String) async throws -> T? {
+    public func getOne<T: NSManagedObject, S: NSManagedObject.Model>(withModel model: S, coreDataType: T.Type, keyOf key: String) throws -> T? {
         
         let context = container.newBackgroundContext()
         
@@ -289,9 +293,9 @@ public struct CDPersistenceManager<Key>: Sendable where Key: Equatable {
     /// - Note: Este método utiliza um modelo `S` para realizar a busca no Core Data com base no campo identificado pela chave especificada. Os objetos do Core Data serão atualizados com os dados do modelo fornecido.
     ///
     /// - Warning: Certifique-se de que o tipo `T` é uma subclasse de `NSManagedObject`, o tipo `S` implementa o protocolo `Codable`, e que o campo identificado pela chave no modelo tem uma correspondência no Core Data para que a atualização seja realizada corretamente.
-    public func update<T: NSManagedObject, S: NSManagedObject.Model>(withModel model: S, coreDataType: T.Type, keyOf key: String = "id") throws {
+    public func update<T: NSManagedObject, S: NSManagedObject.Model>(withModel model: S, coreDataType: T.Type, keyOf key: String = "id", predicate: NSPredicate? = nil) throws {
         
-        try self.deleteOrUpdate(withModel: model, coreDataType: coreDataType, keyOf: key, isUpdate: true)
+        try self.deleteOrUpdate(withModel: model, coreDataType: coreDataType, keyOf: key, predicate: predicate, isUpdate: true)
         
     }
 
@@ -307,9 +311,9 @@ public struct CDPersistenceManager<Key>: Sendable where Key: Equatable {
     /// - Note: Este método utiliza um modelo `S` para realizar a busca no Core Data com base no campo identificado pela chave especificada. Os objetos do Core Data serão excluídos com base nos dados do modelo fornecido.
     ///
     /// - Warning: Certifique-se de que o tipo `T` é uma subclasse de `NSManagedObject`, o tipo `S` implementa o protocolo `Codable`, e que o campo identificado pela chave no modelo tem uma correspondência no Core Data para que a exclusão seja realizada corretamente.
-    public func delete<T: NSManagedObject, S: NSManagedObject.Model>(withModel model: S, coreDataType: T.Type, keyOf key: String = "id") throws {
+    public func delete<T: NSManagedObject, S: NSManagedObject.Model>(withModel model: S, coreDataType: T.Type, keyOf key: String = "id", predicate: NSPredicate? = nil) throws {
         
-        try self.deleteOrUpdate(withModel: model, coreDataType: coreDataType, keyOf: key, isUpdate: false)
+        try self.deleteOrUpdate(withModel: model, coreDataType: coreDataType, keyOf: key, predicate: predicate, isUpdate: false)
         
     }
 
@@ -328,9 +332,21 @@ public struct CDPersistenceManager<Key>: Sendable where Key: Equatable {
     public func deleteMany<T: NSManagedObject, S: NSManagedObject.Model>(withModel models: [S], coreDataType: T.Type, keyOf key: String = "id") throws {
         
         for model in models {
-            try self.deleteSelecteds(withModel: model, coreDataType: coreDataType, keyOf: key)
+            try deleteSelecteds(withModel: model, coreDataType: coreDataType, keyOf: key)
         }
         
+    }
+    
+    public func isExpired(expirationTime: Double, models: [NSManagedObject]?) throws -> Bool {
+           
+        let timingSaved = models?.first?.value(forKey: .timestamps) as? Double ?? 0.0
+        let actualTiming = Date.now.timeIntervalSince1970
+        let differenceBetweenTiming = abs(timingSaved - actualTiming)
+        if expirationTime > differenceBetweenTiming  {
+            return false
+        }
+        
+        return true
     }
     
     /// Exclui objetos do tipo `NSManagedObject` do Core Data com base em um modelo específico e uma chave de identificação.
@@ -404,13 +420,14 @@ public struct CDPersistenceManager<Key>: Sendable where Key: Equatable {
     /// - Note: Este método utiliza um modelo `S` para realizar a busca no Core Data com base no campo identificado pela chave especificada. Se a operação for uma atualização, os objetos do Core Data serão atualizados com os dados do modelo fornecido.
     ///
     /// - Warning: Certifique-se de que o tipo `T` é uma subclasse de `NSManagedObject`, o tipo `S` implementa o protocolo `Codable`, e que o campo identificado pela chave no modelo tem uma correspondência no Core Data para que a operação seja realizada corretamente.
-    private func deleteOrUpdate<T: NSManagedObject, S: NSManagedObject.Model>(withModel model: S, coreDataType: T.Type, keyOf key: String, isUpdate: Bool = false) throws {
+    private func deleteOrUpdate<T: NSManagedObject, S: NSManagedObject.Model>(withModel model: S, coreDataType: T.Type, keyOf key: String, predicate: NSPredicate?, isUpdate: Bool = false) throws {
         
         let context = container.newBackgroundContext()
         
         let coreDataObject = T(context: context)
         
         let request = coreDataType.fetchRequest()
+        request.predicate = predicate
         
         let result = try context.fetch(request) as? [T]
         

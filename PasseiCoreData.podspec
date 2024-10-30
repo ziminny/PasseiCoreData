@@ -15,4 +15,10 @@ Pod::Spec.new do |s|
   s.source_files          = 'PasseiCoreData/Classes/**/*' 
   s.dependency 'PasseiLogManager'
   s.dependency 'PasseiFake'
+
+  s.test_spec 'Tests' do |test_spec|
+    test_spec.source_files = 'PasseiCoreData/Tests/**/*.{swift,h,m}'
+    test_spec.framework = 'XCTest'
+  end
+
   end

@@ -17,7 +17,7 @@ public protocol CDManagedObjectProtocol where Self: Sendable {
     associatedtype Model: NSManagedObject.Model
     
     /// Gerenciador de persistência do Core Data.
-    var manager: CDPersistenceManager<KeyID> { get }
+    var manager: CDPersistentStore<KeyID> { get }
     
     /// Obtém um objeto do tipo Model do Core Data.
     /// - Returns: Objeto do tipo Model recuperado do Core Data, ou nil se não encontrado.

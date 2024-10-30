@@ -46,14 +46,19 @@ open class CDPersistenceController: @unchecked Sendable {
     /// - Parameters:
     ///   - configuration: A configuração do Core Data a ser utilizada.
     ///   - inMemory: Indica se deve ser utilizado armazenamento em memória.
-    public init(withConfiguration configuration: CDConfigurationProtocol, inMemory: Bool = false) {
+    public init(withConfiguration configuration: CDConfigurationProtocol, inMemory: Bool = false, container: NSPersistentContainer? = nil) {
         self.configuration = configuration
-        container = NSPersistentContainer(name: configuration.dbName)
+        
+        if let container {
+            self.container = container
+        } else {
+            self.container = NSPersistentContainer(name: configuration.dbName)
+        }
         
         if inMemory {
-            container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
+            self.container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
         }
-        container.loadPersistentStores(completionHandler: { (storeDescription, error) in
+        self.container.loadPersistentStores(completionHandler: { (storeDescription, error) in
             
             if let error = error as NSError? {
                 print("Core data error: \(error)")
@@ -63,3 +68,4 @@ open class CDPersistenceController: @unchecked Sendable {
         })
     }
 }
+
